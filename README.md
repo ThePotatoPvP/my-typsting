@@ -1,4 +1,4 @@
-# my-typst-cfg
+# my-typsting
 
 These templates make use of the [typst-shapemaker](https://github.com/avivi55/typst-shapemaker) plugin.
 
