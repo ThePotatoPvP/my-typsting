@@ -1,5 +1,6 @@
 #import "@preview/touying:0.6.1": *
 #import "@local/shapemaker:0.1.0" : *
+#import "@preview/showybox:2.0.4": showybox
 
 /// Utils 
 #let theme_color = state("theme-color", luma(0))
@@ -209,6 +210,121 @@
       footer: footer
     ),
   )
+
+  body
+}
+
+
+#let custom_box(color) = (
+  gauss: (
+    title-style: (
+      color: color.darken(30%),
+      sep-thickness: 0pt,
+      align: left,
+    ),
+    frame: (
+      title-color: color.lighten(85%),
+      border-color: color,
+      thickness: (left: 2pt),
+      radius: 0pt,
+    ),
+  )
+)
+
+#let exercise_counter = counter("exercise-counter")
+#let question_counter = counter("question-counter")
+#let definition_counter = counter("definition-counter")
+#let dummy_counter = counter("dummy")
+
+#let joliboite(
+  raw_title, unnumbered : false,
+  color : rgb("#85f062cc"),
+  _counter : dummy_counter ,
+  resets : dummy_counter,
+  ..body) = context {
+  let title = []
+  let counter = []
+
+  _counter.step()
+  resets.update(1)
+  title = if raw_title == "" or raw_title == [] { [] } else { raw_title }
+  let stylized_title = if counter == [] or title == [] {[#counter#title]} else {[#counter -- #title]} 
+
+  counter = if unnumbered [] 
+  else [#_counter.display()]
+      
+  let stylized_title = if counter == [] or title == [] {[#counter#title]} else {[#counter -- #title]} 
+  let colored_box_theme = custom_box(color)
+
+  showybox(
+    ..colored_box_theme.at(theme_box.get(), default: colored_box_theme.gauss),
+    breakable: true,
+    title: text(9pt, v(-0.3em) + heading(stylized_title, depth: 3) + v(-0.3em)),
+    ..body,
+  )
+}
+
+#let define = joliboite.with(
+  color : rgb("#f849499a"),
+  _counter: definition_counter
+)
+
+#let exo = joliboite.with(
+  color : rgb("#46f84f9a"),
+  _counter: exercise_counter,
+  resets: question_counter
+)
+
+#let course-shape-theme(
+  ..args,
+  body,
+) = {
+
+  definition_counter.step()
+  exercise_counter.step()
+  question_counter.step()
+
+  let info = args.named()
+  let colour = rgb(info.colour)
+  theme_color.update(colour)
+  let color_palette = generate-palette(colour)
+
+  let bar = shape_strip.with(
+    color_theme: color_palette,
+    image_options: (
+      height: 100%
+    )
+  )
+
+  set page(
+    header: context {
+      if here().page() > 1 {
+        [My Header Content]
+      }
+    },
+    footer: context {
+      line(length: 100%)
+      grid(
+        columns: (1fr, 1fr, 1fr),
+        align(left)[#info.organisation],
+        align(center)[#counter(page).display()],
+        align(right)[#info.author]
+      )
+    }
+  )
+
+
+  box(height: 20%, width: 100%)[
+    #box(height: 3em)[#bar(number:14)]
+    #align(horizon+center)[
+      #text(size : 20pt, font : "Bahnschrift")[#info.title]
+    ]
+    #box(height: 3em)[#bar(number:14)]
+  ]
+  
+  v(2em)
+  
+  
 
   body
 }
